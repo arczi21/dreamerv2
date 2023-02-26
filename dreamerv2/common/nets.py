@@ -346,6 +346,9 @@ class GRUCell(tf.keras.layers.AbstractRNNCell):
     output = update * cand + (1 - update) * state
     return output, [output]
 
+  def get_initial_state(self, inputs=None, batch_size=None, dtype=None):
+    return tf.random.normal((batch_size, self.state_size), dtype=dtype)
+
 
 class DistLayer(common.Module):
 
