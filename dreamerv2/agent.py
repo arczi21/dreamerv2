@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras import mixed_precision as prec
 
@@ -60,6 +61,16 @@ class Agent(common.Module):
     state, outputs, mets = self.wm.train(data, state)
     metrics.update(mets)
     start = outputs['post']
+
+    b, h = start['deter'].shape[0:2]
+    b = int(b // 2)
+    x = self.wm.rssm.initial(b*h)
+    x['stoch'] = self.wm.rssm.get_dist(x, True).sample()[0]
+
+    for k in start.keys():
+      _shape = tf.concat(([b, h], x[k].shape[1:]), 0)
+      start[k] = tf.concat([start[k][:b], x[k].reshape(_shape)], 0)
+
     reward = lambda seq: self.wm.heads['reward'](seq['feat']).mode()
     metrics.update(self._task_behavior.train(
         self.wm, start, data['is_terminal'], reward))
