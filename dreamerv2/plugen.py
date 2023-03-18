@@ -117,6 +117,9 @@ def main():
     logger.add(replay.stats, prefix=mode)
     logger.write()
 
+
+# test
+
   print('Create envs.')
   num_eval_envs = min(config.envs, config.eval_eps)
   if config.envs_parallel == 'none':
