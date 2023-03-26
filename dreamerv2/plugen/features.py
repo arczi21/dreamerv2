@@ -18,5 +18,5 @@ def get_features(data):
     left = (x <= 128)
     down = (y >= 128)
     features = np.stack([left, down], axis=2)
-    return features
+    return features.astype(int)
 
