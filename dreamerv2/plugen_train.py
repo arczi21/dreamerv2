@@ -199,23 +199,24 @@ def main():
     model.eval()
     return model, optimizer
 
-  from torch.utils.tensorboard import SummaryWriter
-  writer = SummaryWriter('runs/plugen')
-
-  N = 100000
+  plugen_iter = int(config.plugen_iter)
+  plugen_batch = int(config.plugen_batch)
   running_loss = 0
   num_features = 2
-  dataset = iter(train_replay.dataset(32, 1))
+  dataset = iter(train_replay.dataset(plugen_batch, 1))
+  plugen_lr = float(config.plugen_lr)
 
-  lr = 1e-4
+  from torch.utils.tensorboard import SummaryWriter
+  writer = SummaryWriter('runs/plugen_lr=' + str(plugen_lr) + '_iter=' + str(plugen_iter))
+
   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   flow = NiceFlow(input_dim=1536, n_layers=4, n_couplings=4,
                   hidden_dim=512).to(device)
-  optimizer = optim.Adam(flow.parameters(), lr=lr)
+  optimizer = optim.Adam(flow.parameters(), lr=plugen_lr)
 
   N_dist = Normal(torch.tensor([0.0]).to(device), torch.tensor([1.0]).to(device))
 
-  for i in range(N):
+  for i in range(plugen_iter):
     data = next(dataset)
 
     features = get_features(data)
