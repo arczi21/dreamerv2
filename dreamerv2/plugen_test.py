@@ -241,7 +241,6 @@ def main():
 
   lr = 1e-4
   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-  device = torch.device("cpu")
   flow = NiceFlow(input_dim=1536, n_layers=4, n_couplings=4,
                   hidden_dim=512).to(device)
   optimizer = optim.Adam(flow.parameters(), lr=lr)
