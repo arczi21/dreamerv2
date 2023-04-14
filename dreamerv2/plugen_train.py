@@ -35,6 +35,7 @@ import ruamel.yaml as yaml
 import agent
 import common
 from plugen.features import get_features
+from plugen.tests import accuracy_test
 from plugen.net import NiceFlow
 
 
@@ -223,7 +224,6 @@ def main():
     features = torch.tensor(features).to(device)
     current_mean = 2*features - 1
     current_sigma = torch.ones_like(current_mean)
-    #print(features)
 
     data = agnt.wm.preprocess(data)
     embed = agnt.wm.encoder(data).numpy()
@@ -249,8 +249,12 @@ def main():
     print('%s: running loss: %s, loss: %s' % (i+1, running_loss/(i+1), loss.item()))
     writer.add_scalar('loss', -loss.item(), i+1)
 
+
     if (i+1) % 1000 == 0:
       save_model("plugen.pch", flow, optimizer)
+      accuracy = accuracy_test(dataset, flow, agnt, device, num_features, 128)
+      for idx, val in enumerate(accuracy):
+        writer.add_scalar('feature_%s' % idx, val, i+1)
       print('saved')
 
 
