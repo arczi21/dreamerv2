@@ -21,7 +21,7 @@ def accuracy_test(dataset, flow, agnt, device, num_features=2, batch=32):
     embed = torch.tensor(embed).to(device)
 
     z, logdet = flow(embed)
-    c = z[:, :, :num_features].to(device).detach().numpy().reshape(-1)
+    c = z[:, :, :num_features].cpu().detach().numpy().reshape(-1)
 
     for i in range(num_features):
       if features[i] == 1 and c[i] >= 0:
