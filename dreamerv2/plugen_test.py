@@ -38,8 +38,6 @@ from common import NormLayer
 from plugen.features import get_features
 from plugen.net import NiceFlow
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 def main():
 
@@ -247,6 +245,8 @@ def main():
 
   flow, optimizer = load_model("plugen.pch", flow, optimizer)
 
+  """
+
   data = next(dataset)
 
   features = torch.tensor([[[1., 1.]]]).to(device)
@@ -291,8 +291,50 @@ def main():
       images.append(img[0].numpy())
 
   print(len(images))
-  images = np.array(images)
+  images = np.array(images).clip(0, 0.558)
   show_grid(images, (4, 16))
+  
+  """
+
+  def replace_attributes(replay, flow, features, N=6, title=""):
+    images = []
+    num_features = len(features)
+    features = torch.tensor([[features]]).to(device)
+    features = 2 * features - 1.
+
+    for i in range(N):
+      data = next(iter(replay.dataset(1, 1)))
+      data = agnt.wm.preprocess(data)
+      images.append(data['image'][0, 0].numpy())
+      embed = agnt.wm.encoder(data).numpy()
+      embed = torch.tensor(embed).to(device)
+      with torch.no_grad():
+        z, logdet = flow(embed)
+      z[:, :, :num_features] = features
+      with torch.no_grad():
+        embed = flow.inv_flow(z)
+      embed = tf.convert_to_tensor(embed.numpy()[0], dtype=tf.dtypes.float16)
+      deter = agnt.wm.rssm.initial(1)['deter']
+
+      x = tf.concat([deter, embed], -1)
+      x = agnt.wm.rssm.get('obs_out', tfkl.Dense, agnt.wm.rssm._hidden)(x)
+      x = agnt.wm.rssm.get('obs_out_norm', NormLayer, agnt.wm.rssm._norm)(x)
+      x = agnt.wm.rssm._act(x)
+      stats = agnt.wm.rssm._suff_stats_layer('obs_dist', x)
+      dist = agnt.wm.rssm.get_dist(stats)
+      stoch = dist.sample()
+      state = {'stoch': stoch, 'deter': deter, **stats}
+
+      feat = agnt.wm.rssm.get_feat(state)
+      img = agnt.wm.heads['decoder'](feat)['image'].mode() + 0.5
+      images.append(img[0].numpy())
+
+    images = np.array(images)
+    print(images.shape)
+    show_grid(images, (N, 2))
+
+
+  replace_attributes(train_replay, flow, [1., 1.])
 
 
 if __name__ == '__main__':
