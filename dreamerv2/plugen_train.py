@@ -207,7 +207,7 @@ def main():
   plugen_lr = float(config.plugen_lr)
 
   from torch.utils.tensorboard import SummaryWriter
-  writer = SummaryWriter('runs/plugen_lr=' + str(plugen_lr) + '_iter=' + str(plugen_iter))
+  writer = SummaryWriter('runs/plugen_lr=' + str(plugen_lr) + '_iter=' + str(plugen_iter) + "(time)")
 
   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   flow = NiceFlow(input_dim=1536, n_layers=4, n_couplings=4,
@@ -251,7 +251,7 @@ def main():
 
 
     if (i) % 1000 == 0:
-      save_model("plugen.pch", flow, optimizer)
+      save_model('runs/plugen_lr=' + str(plugen_lr) + '_iter=' + str(plugen_iter) + "(time).pch", flow, optimizer)
       accuracy = accuracy_test(dataset, flow, agnt, device, num_features, 128)
       for idx, val in enumerate(accuracy):
         writer.add_scalar('feature_%s' % idx, val, i+1)
