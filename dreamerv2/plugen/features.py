@@ -1,5 +1,4 @@
 import gym
-import time
 import numpy as np
 
 env = gym.make('Breakout-v0')
@@ -18,7 +17,7 @@ def get_features(data):
     z = ram[:, :, 91] * 255 + ram[:, :, 90]
     left = (x <= 128)
     down = (y >= 128)
-    time = (z > 4791)
+    time = (z >= 4196.5)
     features = np.stack([left, down, time], axis=2)
     return features.astype(int)
 
