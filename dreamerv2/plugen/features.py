@@ -12,11 +12,19 @@ env = gym.make('Breakout-v0')
 
 
 def get_features(data):
-    ram = data['ram'].numpy()
+    ram = data['ram'].numpy().astype(int)
     x = ram[:, :, 99]
     y = ram[:, :, 101]
+    z = ram[:, :, 91] * 255 + ram[:, :, 90]
     left = (x <= 128)
     down = (y >= 128)
-    features = np.stack([left, down], axis=2)
+    time = (z > 4791)
+    features = np.stack([left, down, time], axis=2)
     return features.astype(int)
+
+
+def get_time(data):
+    ram = data['ram'].numpy().astype(int)
+    t = ram[:, :, 91] * 255 + ram[:, :, 90]
+    return t
 

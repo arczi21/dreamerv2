@@ -203,7 +203,6 @@ def main():
   plugen_iter = int(config.plugen_iter)
   plugen_batch = int(config.plugen_batch)
   running_loss = 0
-  num_features = 2
   dataset = iter(train_replay.dataset(plugen_batch, 1))
   plugen_lr = float(config.plugen_lr)
 
@@ -221,6 +220,7 @@ def main():
     data = next(dataset)
 
     features = get_features(data)
+    num_features = features.shape[-1]
     features = torch.tensor(features).to(device)
     current_mean = 2*features - 1
     current_sigma = torch.ones_like(current_mean)
@@ -250,7 +250,7 @@ def main():
     writer.add_scalar('loss', -loss.item(), i+1)
 
 
-    if (i+1) % 1000 == 0:
+    if (i) % 1000 == 0:
       save_model("plugen.pch", flow, optimizer)
       accuracy = accuracy_test(dataset, flow, agnt, device, num_features, 128)
       for idx, val in enumerate(accuracy):
