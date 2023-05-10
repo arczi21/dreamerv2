@@ -203,7 +203,6 @@ def main():
   plugen_iter = int(config.plugen_iter)
   plugen_batch = int(config.plugen_batch)
   running_loss = 0
-  dataset = iter(train_replay.dataset(plugen_batch, 1))
   plugen_lr = float(config.plugen_lr)
 
   from torch.utils.tensorboard import SummaryWriter
@@ -217,7 +216,7 @@ def main():
   N_dist = Normal(torch.tensor([0.0]).to(device), torch.tensor([1.0]).to(device))
 
   for i in range(plugen_iter):
-    data = next(dataset)
+    data = next(iter(train_replay.dataset(plugen_batch, 1)))
 
     features = get_features(data)
     num_features = features.shape[-1]
@@ -252,7 +251,7 @@ def main():
 
     if (i) % 1000 == 0:
       save_model('runs/plugen_lr=' + str(plugen_lr) + '_iter=' + str(plugen_iter) + "(time).pch", flow, optimizer)
-      accuracy = accuracy_test(dataset, flow, agnt, device, num_features, 128)
+      accuracy = accuracy_test(eval_replay, flow, agnt, device, num_features, 128)
       for idx, val in enumerate(accuracy):
         writer.add_scalar('feature_%s' % idx, val, i+1)
       print('saved')

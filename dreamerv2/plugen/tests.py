@@ -10,10 +10,10 @@ import numpy as np
 from plugen.features import get_features
 
 
-def accuracy_test(dataset, flow, agnt, device, num_features=2, batch=32):
+def accuracy_test(replay, flow, agnt, device, num_features=2, batch=32):
   accuracy = np.zeros(num_features)
   for j in range(batch):
-    data = next(dataset)
+    data = next(iter(replay.dataset(1, 1)))
     features = get_features(data).reshape(-1)
 
     data = agnt.wm.preprocess(data)
