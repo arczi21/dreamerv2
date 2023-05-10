@@ -15,6 +15,8 @@ from torch import distributions
 from torch.distributions import Normal
 import torch.nn as nn
 import torch.nn.functional as F
+from sklearn.metrics import f1_score
+from scipy.stats import norm
 
 try:
   import rich.traceback
@@ -296,21 +298,18 @@ def main():
   
   """
 
-  def replace_attributes(replay, flow, features, N=6, title=""):
+  def replace_attributes(replay, flow, feature_idx, feature_vals, N=6, expand=False, expand_len=10, title=""):
     images = []
-    num_features = len(features)
-    features = torch.tensor([[features]]).to(device)
-    features = 2 * features - 1.
-
     for i in range(N):
       data = next(iter(replay.dataset(1, 1)))
       data = agnt.wm.preprocess(data)
-      images.append(data['image'][0, 0].numpy())
+      images.append(data['image'][0, 0].numpy() + 0.5)
       embed = agnt.wm.encoder(data).numpy()
       embed = torch.tensor(embed).to(device)
       with torch.no_grad():
         z, logdet = flow(embed)
-      z[:, :, :num_features] = features
+      for idx, val in zip(feature_idx, feature_vals):
+        z[:, :, idx] = val
       with torch.no_grad():
         embed = flow.inv_flow(z)
       embed = tf.convert_to_tensor(embed.numpy()[0], dtype=tf.dtypes.float16)
@@ -331,10 +330,41 @@ def main():
 
     images = np.array(images)
     print(images.shape)
-    show_grid(images, (N, 2))
+    show_grid(images, (N, 2), title=title)
+
+  def feature_histogram(replay, flow, feature_idx, feature_value, N=1024, title=""):
+    count = 0
+    values = []
+    while count < N:
+      data = next(iter(replay.dataset(1, 1)))
+      features = get_features(data).reshape(-1)
+      if features[feature_idx] == feature_value:
+        count += 1
+        print("%s / %s" % (count, N))
+        data = agnt.wm.preprocess(data)
+        embed = agnt.wm.encoder(data).numpy()
+        embed = torch.tensor(embed).to(device)
+        with torch.no_grad():
+          z, logdet = flow(embed)
+        values.append(z[0, 0, feature_idx])
+
+    plt.hist(values, bins=np.linspace(2*feature_value-3, 2*feature_value + 1, 30), density=True)
+    xmin, xmax = plt.xlim()
+    x_range = np.linspace(xmin, xmax, 100)
+    plt.plot(x_range, norm.pdf(x_range, loc=2*feature_value-1, scale=1), color='red')
+    plt.title(title)
+    plt.show()
 
 
-  replace_attributes(train_replay, flow, [1., 1.])
+  replace_attributes(train_replay, flow, [2], [1], N=8, title="time = 0")
+  replace_attributes(train_replay, flow, [2], [0], N=8, title="time = 1")
+  #replace_attributes(train_replay, flow, [0., 1.], N=8, title="RIGHT DOWN")
+  #replace_attributes(train_replay, flow, [0., 0.], N=8, title="RIGHT UP")
+
+  #feature_histogram(train_replay, flow, 0, 1, title="LEFT")
+  #feature_histogram(train_replay, flow, 0, 0, title="RIGHT")
+  #feature_histogram(train_replay, flow, 1, 1, title="DOWN")
+  #feature_histogram(train_replay, flow, 1, 0, title="UP")
 
 
 if __name__ == '__main__':
