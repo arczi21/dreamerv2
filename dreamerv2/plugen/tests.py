@@ -31,3 +31,21 @@ def accuracy_test(replay, flow, agnt, device, num_features=2, batch=32):
 
   accuracy = accuracy / batch
   return accuracy
+
+
+def feature_histogram(replay, flow, agnt, device, feature_idx, feature_value=None, N=1024):
+  count = 0
+  values = []
+  while count < N:
+    data = next(iter(replay.dataset(1, 1)))
+    features = get_features(data).reshape(-1)
+    if feature_value is None or features[feature_idx] == feature_value:
+      count += 1
+      data = agnt.wm.preprocess(data)
+      embed = agnt.wm.encoder(data).numpy()
+      embed = torch.tensor(embed).to(device)
+      with torch.no_grad():
+        z, logdet = flow(embed)
+      values.append(z[0, 0, feature_idx].item())
+
+  return values

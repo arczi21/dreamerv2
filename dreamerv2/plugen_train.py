@@ -35,7 +35,7 @@ import ruamel.yaml as yaml
 import agent
 import common
 from plugen.features import get_features
-from plugen.tests import accuracy_test
+from plugen.tests import accuracy_test, feature_histogram
 from plugen.net import NiceFlow
 
 
@@ -206,7 +206,7 @@ def main():
   plugen_lr = float(config.plugen_lr)
 
   from torch.utils.tensorboard import SummaryWriter
-  writer = SummaryWriter('runs/plugen_lr=' + str(plugen_lr) + '_iter=' + str(plugen_iter) + "(time)")
+  writer = SummaryWriter('runs/plugen2_lr=' + str(plugen_lr) + '_iter=' + str(plugen_iter) + "(time)")
 
   device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
   flow = NiceFlow(input_dim=1536, n_layers=4, n_couplings=4,
@@ -255,6 +255,12 @@ def main():
       for idx, val in enumerate(accuracy):
         writer.add_scalar('feature_%s' % idx, val, i+1)
       print('saved')
+
+    if i % 10000 == 0:
+      for j in range(num_features):
+        values = feature_histogram(eval_replay, flow, agnt, device, j, None, 512)
+        values = np.array(values)
+        writer.add_histogram('hist_%s' % j, values, i+1)
 
 
 
