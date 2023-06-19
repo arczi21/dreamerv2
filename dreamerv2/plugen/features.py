@@ -14,11 +14,11 @@ def get_features(data):
     ram = data['ram'].numpy().astype(int)
     x = ram[:, :, 99]
     y = ram[:, :, 101]
-    z = ram[:, :, 91] * 255 + ram[:, :, 90]
+    z = ram[:, :, 77]
     left = (x <= 128)
     down = (y >= 128)
-    time = (z >= 4196.5)
-    features = np.stack([left, down, time], axis=2)
+    count = (z >= 40)
+    features = np.stack([left, down, count], axis=2)
     return features.astype(int)
 
 
