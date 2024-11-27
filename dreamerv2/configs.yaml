@@ -78,6 +78,11 @@ defaults:
   disag_action_cond: True
   expl_model_loss: kl
 
+  # Plugen
+  plugen_lr: 1e-4
+  plugen_iter: 1e6
+  plugen_batch: 32
+
 atari:
 
   task: atari_pong
